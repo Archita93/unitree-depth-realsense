@@ -1,0 +1,71 @@
+#!/bin/bash
+set -e
+
+readonly SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+readonly FASTTD3_DIR="${SCRIPT_DIR}/../external/FastTD3"
+readonly POLICY_DIR="${SCRIPT_DIR}/../policies"
+readonly BASE_POLICY="${SCRIPT_DIR}/../policies/fasttd3_increased_action_scale"
+readonly REMOTE="yh974@ids-gpu-01.fzi.de"
+readonly REMOTE_PATH="/mnt/home/yh974/unitree_rl_lab/external/FastTD3/models"
+readonly GO2_CONFIG_PATH="${SCRIPT_DIR}/../deploy/robots/go2/config/config.yaml"
+
+#######################################
+# Create folders needed by script
+# Globals:
+#   FASTTD3_DIR
+#   POLICY_DIR
+#   BASE_POLICY
+# Arguments:
+#   new_policy_name
+#######################################
+function setup_folders() {
+    local policy_name="$1"
+    cp -r "${BASE_POLICY}" "${POLICY_DIR}/${policy_name}"
+    mkdir -p "${FASTTD3_DIR}/models"
+}
+
+#######################################
+# Export policy to onnx
+# Globals:
+#   FASTTD3_DIR
+#   POLICY_DIR
+# Arguments:
+#   weights
+#   policy_name
+#######################################
+function export_policy() {
+    local weights="$1"
+    local policy_name="$2"
+
+    pushd "${FASTTD3_DIR}"
+    echo $PWD
+    python export_policy.py "${FASTTD3_DIR}/models/${weights}" "${POLICY_DIR}/${policy_name}/exported/policy.onnx"
+    popd
+}
+
+#######################################
+# Main Entrypoint
+# Globals:
+#   FASTTD3_DIR
+#   REMOTE
+#   REMOTE_PATH
+# Arguments:
+#   weights
+#######################################
+function main() {
+    local weights="$1"
+    local policy_name="$(echo ${weights%.*} | tr '[:upper:]' '[:lower:]')"
+
+    echo "Using name ${policy_name}"
+
+    setup_folders "${policy_name}"
+
+    scp -r -P 8000 "${REMOTE}:${REMOTE_PATH}/${weights}" "${FASTTD3_DIR}/models"
+
+    export_policy "${weights}" "${policy_name}"
+
+    local policy_path_for_config="    policy_dir: ../../../policies/${policy_name}"
+    echo "${policy_path_for_config}" >> "${GO2_CONFIG_PATH}"
+}
+
+main "$@"
