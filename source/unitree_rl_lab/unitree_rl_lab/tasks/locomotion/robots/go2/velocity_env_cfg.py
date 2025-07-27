@@ -14,6 +14,7 @@ from isaaclab.managers import TerminationTermCfg as DoneTerm
 from isaaclab.scene import InteractiveSceneCfg
 from isaaclab.sensors import ContactSensorCfg, RayCasterCfg, patterns
 from isaaclab.terrains import TerrainImporterCfg
+from isaaclab.terrains.config.rough import ROUGH_TERRAINS_CFG  # isort: skip
 from isaaclab.utils import configclass
 from isaaclab.utils.assets import ISAAC_NUCLEUS_DIR, ISAACLAB_NUCLEUS_DIR
 from isaaclab.utils.noise import AdditiveUniformNoiseCfg as Unoise
@@ -32,19 +33,19 @@ COBBLESTONE_ROAD_CFG = terrain_gen.TerrainGeneratorCfg(
     difficulty_range=(0.0, 1.0),
     use_cache=False,
     sub_terrains={
-        "flat": terrain_gen.MeshPlaneTerrainCfg(proportion=0.1),
-        # "random_rough": terrain_gen.HfRandomUniformTerrainCfg(
-        #     proportion=0.1, noise_range=(0.01, 0.06), noise_step=0.01, border_width=0.25
-        # ),
+        # "flat": terrain_gen.MeshPlaneTerrainCfg(proportion=0.1),
+        "random_rough": terrain_gen.HfRandomUniformTerrainCfg(
+            proportion=0.1, noise_range=(0.01, 0.06), noise_step=0.01, border_width=0.25
+        ),
         # "hf_pyramid_slope": terrain_gen.HfPyramidSlopedTerrainCfg(
         #     proportion=0.1, slope_range=(0.0, 0.4), platform_width=2.0, border_width=0.25
         # ),
         # "hf_pyramid_slope_inv": terrain_gen.HfInvertedPyramidSlopedTerrainCfg(
         #     proportion=0.1, slope_range=(0.0, 0.4), platform_width=2.0, border_width=0.25
         # ),
-        # "boxes": terrain_gen.MeshRandomGridTerrainCfg(
-        #     proportion=0.2, grid_width=0.45, grid_height_range=(0.05, 0.2), platform_width=2.0
-        # ),
+        "boxes": terrain_gen.MeshRandomGridTerrainCfg(
+            proportion=0.2, grid_width=0.45, grid_height_range=(0.05, 0.2), platform_width=2.0
+        ),
         # "pyramid_stairs": terrain_gen.MeshPyramidStairsTerrainCfg(
         #     proportion=0.2,
         #     step_height_range=(0.05, 0.23),
@@ -74,6 +75,7 @@ class RobotSceneCfg(InteractiveSceneCfg):
         prim_path="/World/ground",
         terrain_type="generator",  # "plane", "generator"
         terrain_generator=COBBLESTONE_ROAD_CFG,  # None, ROUGH_TERRAINS_CFG
+        # terrain_generator=ROUGH_TERRAINS_CFG,  # None, ROUGH_TERRAINS_CFG
         max_init_terrain_level=1,
         collision_group=-1,
         physics_material=sim_utils.RigidBodyMaterialCfg(
@@ -207,7 +209,7 @@ class ActionsCfg:
     """Action specifications for the MDP."""
 
     JointPositionAction = mdp.JointPositionActionCfg(
-        asset_name="robot", joint_names=[".*"], scale=0.25, use_default_offset=True, clip={".*": (-100.0, 100.0)}
+        asset_name="robot", joint_names=[".*"], scale=1.0, use_default_offset=True, clip={".*": (-100.0, 100.0)}
     )
 
 
@@ -253,10 +255,10 @@ class ObservationsCfg:
         joint_vel_rel = ObsTerm(func=mdp.joint_vel_rel, scale=0.05, clip=(-100, 100))
         joint_effort = ObsTerm(func=mdp.joint_effort, scale=0.01, clip=(-100, 100))
         last_action = ObsTerm(func=mdp.last_action, clip=(-100, 100))
-        # height_scanner = ObsTerm(func=mdp.height_scan,
-        #     params={"sensor_cfg": SceneEntityCfg("height_scanner")},
-        #     clip=(-1.0, 5.0),
-        # )
+        height_scanner = ObsTerm(func=mdp.height_scan,
+            params={"sensor_cfg": SceneEntityCfg("height_scanner")},
+            clip=(-1.0, 5.0),
+        )
 
         # def __post_init__(self):
         #     self.history_length = 5
