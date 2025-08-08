@@ -209,7 +209,7 @@ class ActionsCfg:
     """Action specifications for the MDP."""
 
     JointPositionAction = mdp.JointPositionActionCfg(
-        asset_name="robot", joint_names=[".*"], scale=1.0, use_default_offset=True, clip={".*": (-100.0, 100.0)}
+        asset_name="robot", joint_names=[".*"], scale=0.25, use_default_offset=True, clip={".*": (-100.0, 100.0)}
     )
 
 
@@ -417,5 +417,5 @@ class RobotPlayEnvCfg(RobotEnvCfg):
         super().__post_init__()
         self.scene.num_envs = 32
         self.scene.terrain.terrain_generator.num_rows = 2
-        self.scene.terrain.terrain_generator.num_cols = 1
+        self.scene.terrain.terrain_generator.num_cols = len(COBBLESTONE_ROAD_CFG.sub_terrains)
         self.commands.base_velocity.ranges = self.commands.base_velocity.limit_ranges
