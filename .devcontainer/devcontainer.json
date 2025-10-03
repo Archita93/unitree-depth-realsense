@@ -1,0 +1,32 @@
+{
+  "name": "unitree-rl-lab-devcontainer",
+  "privileged": true,
+  "remoteUser": "ubuntu",
+  "dockerComposeFile": "compose.yaml",
+  "service": "unitree-rl-lab-devcontainer",
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:1": {
+      "version": "latest",
+      "configureZshAsDefaultShell": true,
+      "username": "ubuntu",
+      "userUid": "1000",
+      "userGid": "1000"
+    },
+    "ghcr.io/tadachs/devcontainer-features/neovim:latest": {
+      "use_ppa": false,
+    },
+    "ghcr.io/rocker-org/devcontainer-features/apt-packages:1": {
+      "packages":  "stow,tmux,ripgrep,python3-virtualenv,python3-venv,build-essential"
+    },
+  },
+  "workspaceFolder": "/home/ubuntu/unitree_rl_lab",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/home/ubuntu/ws,type=bind",
+  "containerEnv": {
+  },
+  "postCreateCommand": {
+    "video-group": "sudo usermod -aG video ubuntu",
+    "set-locale": "sudo apt-get update && sudo apt-get install -y locales && sudo locale-gen en_US.UTF-8 && sudo update-locale LANG=en_US.UTF-8",
+    "install-isaaclab-extension": ". ~/miniconda3/etc/profile.d/conda.sh && conda activate isaaclab && cd ~/unitree_rl_lab/source/unitree_rl_lab && pip3 install -e ."
+    // "node-install": ". ${NVM_DIR}/nvm.sh && nvm install --lts",
+  }
+}

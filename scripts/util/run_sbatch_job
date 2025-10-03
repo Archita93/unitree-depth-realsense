@@ -1,0 +1,54 @@
+#!/usr/bin/bash
+
+set -e
+
+readonly REPO_PATH="/mnt/home/yh974/unitree_rl_lab"
+readonly LOG_DIR="${REPO_PATH}/logs"
+
+function main() {
+  local task="$1"
+  local name="$2"
+  local project="$3"
+
+  local agent="$4"
+  shift 4
+
+  local addition_args="$@"
+
+  local run_name="$(date --utc +%Y-%d-%m_%H_%M_%S)-${agent}-${name}"
+
+  # create log dir
+  mkdir -p "${LOG_DIR}/${run_name}"
+
+  cd $REPO_PATH
+  . "${HOME}/miniconda3/etc/profile.d/conda.sh"
+  conda activate fasttd3
+
+  cd "${REPO_PATH}/external/FastTD3"
+
+# CUDA_LAUNCH_BLOCKING=1
+  sbatch << EOF
+#!/bin/bash
+#SBATCH --job-name=${run_name}
+#SBATCH --output=${LOG_DIR}/${run_name}/%j.log
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --gpus=a100_80gb:1
+#SBATCH --time=1400
+#SBATCH --mem=10000M
+#SBATCH --cpus-per-gpu=6
+
+conda activate fasttd3
+
+python scripts/train_rnn.py \
+  --env_name ${task} \
+  --exp_name ${run_name} \
+  --project ${project} \
+  --agent ${agent} \
+  ${addition_args} \
+  --render_interval 0 \
+  --seed 1
+EOF
+}
+
+main "$@"

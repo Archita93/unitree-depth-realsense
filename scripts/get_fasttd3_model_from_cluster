@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-readonly SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+readonly SCRIPT_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)"
 readonly FASTTD3_DIR="${SCRIPT_DIR}/../external/FastTD3"
 readonly POLICY_DIR="${SCRIPT_DIR}/../policies"
 readonly BASE_POLICY="${SCRIPT_DIR}/../policies/fasttd3_increased_action_scale"
