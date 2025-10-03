@@ -4,13 +4,13 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from isaaclab.utils import configclass
-from isaaclab_rl.rsl_rl import RslRlOnPolicyRunnerCfg, RslRlPpoActorCriticCfg, RslRlPpoAlgorithmCfg
+from isaaclab_rl.rsl_rl import RslRlOnPolicyRunnerCfg, RslRlPpoActorCriticCfg, RslRlPpoAlgorithmCfg, RslRlPpoActorCriticRecurrentCfg
 
 
 @configclass
 class BasePPORunnerCfg(RslRlOnPolicyRunnerCfg):
     num_steps_per_env = 24
-    max_iterations = 50000
+    max_iterations = 10000
     save_interval = 100
     experiment_name = ""  # same as task name
     empirical_normalization = False
@@ -33,4 +33,17 @@ class BasePPORunnerCfg(RslRlOnPolicyRunnerCfg):
         lam=0.95,
         desired_kl=0.01,
         max_grad_norm=1.0,
+    )
+
+@configclass
+class RecurrentPPORunnerCfg(BasePPORunnerCfg):
+    policy = RslRlPpoActorCriticRecurrentCfg(
+        class_name="ActorCriticRecurrent",
+        init_noise_std=1.0,
+        actor_hidden_dims=[200, 100],
+        critic_hidden_dims=[200, 100],
+        activation="elu",
+        rnn_type="lstm",
+        rnn_hidden_dim=128,
+        rnn_num_layers=1,
     )
