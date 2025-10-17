@@ -57,7 +57,7 @@ UNITREE_GO2_CFG = UnitreeArticulationCfg(
     actuators={
         "legs": ImplicitActuatorCfg(
             joint_names_expr=[".*_hip_joint", ".*_thigh_joint", ".*_calf_joint"],
-            effort_limit_sim=23.5,
+            effort_limit_sim=35.0,
             velocity_limit_sim=30.0,
             stiffness=25.0,
             damping=0.5,

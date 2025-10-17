@@ -47,51 +47,35 @@ PARKOUR_TERRAIN_CFG = terrain_gen.TerrainGeneratorCfg(
     difficulty_range=(0.0, 1.0),
     use_cache=False,
     sub_terrains={
-        "random_rough": terrain_gen.HfRandomUniformTerrainCfg(
-            proportion=0.1,
-            noise_range=(0.01, 0.06),
-            noise_step=0.01,
-            border_width=0.25,
-        ),
+        # "random_rough": terrain_gen.HfRandomUniformTerrainCfg(
+        #     proportion=0.1,
+        #     noise_range=(0.01, 0.06),
+        #     noise_step=0.01,
+        #     border_width=0.25,
+        # ),
         "gap": terrain_gen.MeshGapTerrainCfg(
-            gap_width_range=(0.15, 0.8),
+            gap_width_range=(0.01, 0.8),
             platform_width=1.5,
             proportion=0.1,
         ),
         "ring": terrain_gen.MeshFloatingRingTerrainCfg(
             ring_width_range=(0.1, 1.0),
-            ring_height_range=(0.25, 0.35),
+            ring_height_range=(0.25, 0.50),
             ring_thickness=0.5,
             platform_width=1.5,
             proportion=0.1,
         ),
         "box": terrain_gen.MeshBoxTerrainCfg(
-            box_height_range=(0.05, 0.5),
+            box_height_range=(0.01, 0.5),
             platform_width=1.5,
             double_box=True,
             proportion=0.1,
         ),
         "pit": terrain_gen.MeshPitTerrainCfg(
-            pit_depth_range=(0.05, 0.5),
+            pit_depth_range=(0.01, 0.5),
             platform_width=1.5,
             double_pit=True,
             proportion=0.1,
-        ),
-        "pyramid_stairs": terrain_gen.MeshPyramidStairsTerrainCfg(
-            proportion=0.2,
-            step_height_range=(0.02, 0.20),
-            step_width=0.3,
-            platform_width=3.0,
-            border_width=1.0,
-            holes=False,
-        ),
-        "pyramid_stairs_inv": terrain_gen.MeshInvertedPyramidStairsTerrainCfg(
-            proportion=0.2,
-            step_height_range=(0.02, 0.20),
-            step_width=0.3,
-            platform_width=3.0,
-            border_width=1.0,
-            holes=False,
         ),
         # "stepping_stones": terrain_gen.HfSteppingStonesTerrainCfg(
         #     stone_width_range=(0.05, 0.05),
@@ -105,6 +89,22 @@ PARKOUR_TERRAIN_CFG = terrain_gen.TerrainGeneratorCfg(
         # ),
         # "hf_pyramid_slope_inv": terrain_gen.HfInvertedPyramidSlopedTerrainCfg(
         #     proportion=0.1, slope_range=(0.0, 0.4), platform_width=2.0, border_width=0.25
+        # ),
+        # "pyramid_stairs": terrain_gen.MeshPyramidStairsTerrainCfg(
+        #     proportion=0.2,
+        #     step_height_range=(0.05, 0.23),
+        #     step_width=0.3,
+        #     platform_width=3.0,
+        #     border_width=1.0,
+        #     holes=False,
+        # ),
+        # "pyramid_stairs_inv": terrain_gen.MeshInvertedPyramidStairsTerrainCfg(
+        #     proportion=0.2,
+        #     step_height_range=(0.05, 0.23),
+        #     step_width=0.3,
+        #     platform_width=3.0,
+        #     border_width=1.0,
+        #     holes=False,
         # ),
     },
 )
@@ -617,10 +617,11 @@ class RobotPlayEnvCfg(RobotEnvCfg):
     def __post_init__(self):
         super().__post_init__()
         self.scene.num_envs = 32
-        self.scene.terrain.terrain_generator.num_rows = 2
+        self.scene.terrain.terrain_generator.num_rows = 4
         # self.scene.terrain.terrain_generator.num_cols = len(COBBLESTONE_ROAD_CFG.sub_terrains)
         self.scene.terrain.terrain_generator.num_cols = len(PARKOUR_TERRAIN_CFG.sub_terrains)
         self.commands.base_velocity.ranges = self.commands.base_velocity.limit_ranges
+        self.curriculum = None
 
 @configclass
 class TeacherEnvCfg(RobotEnvCfg):
