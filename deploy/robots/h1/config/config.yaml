@@ -44,4 +44,7 @@ FSM:
       ]
     ]
   Velocity:
-    policy_dir: ../../../logs/rsl_rl/unitree_h1_velocity
+    # policy_dir: ../../../logs/rsl_rl/unitree_h1_velocity/2025-07-28_11-26-12/
+    policy_dir: ../../../logs/rsl_rl/unitree_h1_velocity/2025-07-29_23-43-26/
+    # policy_dir: ../../../policies/unitree-h1-velocity__2025-27-07_21_13_02-fasttd3-baseline__1_final
+    # policy_dir: ../../../policies/unitree-h1-velocity__2025-27-07_21_12_05-fasttd3_simbav2-baseline__1_final

@@ -40,23 +40,45 @@ int main(int argc, char** argv)
 
     init_fsm_state();
 
+    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
     // Initialize FSM
     auto & joy = FSMState::lowstate->joystick;
     auto fsm = std::make_unique<CtrlFSM>(new State_Passive(FSMMode::Passive));
     fsm->states.back()->registered_checks.emplace_back(
         std::make_pair(
-            [&]()->bool{ return joy.LT.pressed && joy.A.on_pressed; }, // L2 + A
+            [&]()->bool{ 
+                // std::cout << joy.LT.pressed << "\n";
+                // std::cout << joy.A.pressed << "\n";
+                // std::cout << "----\n";
+                return joy.LT.pressed && joy.A.pressed;
+            }, // L2 + A
+            // [&]()->bool{ 
+            //     std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+            //     int elapsed = std::chrono::duration_cast<std::chrono::seconds> (now - begin).count();
+            //     return elapsed > 5;
+            // },
             (int)FSMMode::FixStand
         )
     );
     fsm->add(new State_FixStand(FSMMode::FixStand));
     fsm->states.back()->registered_checks.emplace_back(
         std::make_pair(
-            [&]()->bool{ return joy.start.on_pressed; }, // Start
+            [&]()->bool{ 
+                // std::cout << joy.start.pressed << "\n";
+                return joy.start.pressed;
+            }, // Start
+            // [&]()->bool{ 
+            //     std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+            //     int elapsed = std::chrono::duration_cast<std::chrono::seconds> (now - begin).count();
+            //     return elapsed > 10;
+            // },
             FSMMode::Velocity
         )
     );
     fsm->add(new State_RLBase(FSMMode::Velocity, "Velocity"));
+
+    // auto fsm = std::make_unique<CtrlFSM>(new State_RLBase(FSMMode::Velocity, "Velocity"));
 
     std::cout << "Press [L2 + A] to enter FixStand mode.\n";
     std::cout << "And then press [Start] to start controlling the robot.\n";

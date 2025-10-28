@@ -11,5 +11,30 @@ FSM:
       [0., 0.8, -1.5, 0., 0.8, -1.5, 0., 0.8, -1.5, 0., 0.8, -1.5],
     ]
   Velocity:
-    policy_dir: ../../../logs/rsl_rl/unitree_go2_velocity
-    
+    # policy_dir: ../../../policies/fasttd3_flat
+    # policy_dir: ../../../policies/fasttd3_rough_more_exploration
+    # policy_dir: ../../../logs/rsl_rl/unitree_go2_velocity/2025-07-11_02-08-50
+    # policy_dir: ../../../policies/fasttd3_rough_policy_history
+    # policy_dir: ../../../policies/fasttd3_rough_policy_history_no_cmd_curr
+    # policy_dir: ../../../policies/fasttd3_increased_action_scale
+    # policy_dir: ../../../policies/fasttd3_increased_action_scale_more_exploration
+    # policy_dir: ../../../policies/simbav2_increased_action_scale_more_exploration
+    # policy_dir: ../../../policies/simbav2_increased_action_scale
+    # policy_dir: ../../../policies/simbav2_increased_action_scale_adjusted_rewards/
+    # policy_dir: ../../../policies/fasttd3_increased_action_scale_adjusted_rewards/
+    # policy_dir: ../../../policies/fasttd3_increased_action_scale_increased_action_bound_no_curr/
+    # policy_dir: ../../../policies/simbav2_increased_action_scale_increased_action_bound_no_curr/
+    # policy_dir: ../../../policies/fasttd3_increased_action_scale_adjust_curr/
+    # policy_dir: ../../../policies/unitree-go2-velocity__fasttd3_some_rough_increased_action__1_final
+    # policy_dir: ../../../policies/unitree-go2-velocity__fasttd3_some_rough_increased_action_simbav2__1_final
+    # policy_dir: ../../../policies/unitree-go2-velocity__2025-29-07_22_10_16-fasttd3-much_larger_action_space__1_final
+    # policy_dir: ../../../policies/unitree-go2-velocity__2025-31-07_20_19_02-fasttd3-no_squashing_original_action_scale_higher_action_bounds__1_final
+    # policy_dir: ../../../policies/unitree-go2-velocity__2025-01-08_20_26_16-fasttd3-no_squashing_original_action_scale_higher_action_bounds_no_noise_resampling__1_final
+    # policy_dir: ../../../policies/unitree-go2-velocity__2025-31-07_20_19_10-fasttd3_simbav2-no_squashing_original_action_scale_higher_action_bounds__1_85000
+    # policy_dir: ../../../policies/unitree-go2-velocity__2025-01-08_20_26_26-fasttd3_simbav2-no_squashing_original_action_scale_higher_action_bounds_no_noise_resampling__1_85000
+    # policy_dir: ../../../policies/unitree-go2-velocity__2025-01-08_20_26_16-fasttd3-no_squashing_original_action_scale_higher_action_bounds_no_noise_resampling__1_final
+    # policy_dir: ../../../policies/unitree-go2-velocity__2025-04-08_18_24_02-fasttd3-no_squashing_original_action_scale_higher_action_bounds__1_final
+    # policy_dir: ../../../policies/unitree-go2-velocity__hyperparams__1_final
+    policy_dir: ../../../policies/unitree-go2-parkour-simbav2-bc-no-vision
+    # policy_dir: ../../../policies/unitree-go2-parkour-simbav2-bc-vision
+    use_vision: true

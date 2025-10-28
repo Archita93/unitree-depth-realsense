@@ -28,7 +28,7 @@ protected:
 class OrtRunner : public Algorithms
 {
 public:
-    OrtRunner(std::string model_path)
+    OrtRunner(std::string model_path, bool use_vision = false)
     {
         // Init Model
         env = Ort::Env(ORT_LOGGING_LEVEL_WARNING, "onnx_model");
@@ -38,21 +38,33 @@ public:
 
         Ort::TypeInfo input_type = session->GetInputTypeInfo(0);
         input_shape = input_type.GetTensorTypeAndShapeInfo().GetShape();
+
+        Ort::TypeInfo hidden_type = session->GetInputTypeInfo(1);
+        hidden_shape = hidden_type.GetTensorTypeAndShapeInfo().GetShape();
+
         Ort::TypeInfo output_type = session->GetOutputTypeInfo(0);
         output_shape = output_type.GetTensorTypeAndShapeInfo().GetShape();
 
         action.resize(output_shape[1]);
+        hidden_state.resize(hidden_shape[1], 0);
     }
 
     std::vector<float> act(std::vector<float> obs)
     {
         auto memory_info = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeCPU);
         auto input_tensor = Ort::Value::CreateTensor<float>(memory_info, obs.data(), obs.size(), input_shape.data(), input_shape.size());
-        auto output_tensor = session->Run(Ort::RunOptions{nullptr}, input_names.data(), &input_tensor, 1, output_names.data(), 1);
+        auto hidden_state_tensor = Ort::Value::CreateTensor<float>(memory_info, hidden_state.data(), hidden_state.size(), hidden_shape.data(), hidden_shape.size());
+        const Ort::Value inputs[] = {
+          std::move(input_tensor),
+          std::move(hidden_state_tensor)
+        };
+        auto output_tensor = session->Run(Ort::RunOptions{nullptr}, input_names.data(), inputs, 2, output_names.data(), 2);
         auto floatarr = output_tensor.front().GetTensorMutableData<float>();
+        auto hidden_state_out = output_tensor.back().GetTensorMutableData<float>();
 
         std::lock_guard<std::mutex> lock(act_mtx_);
         std::memcpy(action.data(), floatarr, output_shape[1] * sizeof(float));
+        std::memcpy(hidden_state.data(), hidden_state_out, hidden_shape[1] * sizeof(float));
         return action;
     }
 
@@ -62,11 +74,16 @@ private:
     std::unique_ptr<Ort::Session> session;
     Ort::AllocatorWithDefaultOptions allocator;
 
-    const std::vector<const char*> input_names = {"obs"};
-    const std::vector<const char*> output_names = {"actions"};
+    const std::vector<const char*> input_names = {"obs", "hidden_in"};
+    const std::vector<const char*> image_input_names = {"obs", "hidden_in", "image"};
+    const std::vector<const char*> output_names = {"actions", "hidden_out"};
 
     std::vector<int64_t> input_shape;
     std::vector<int64_t> output_shape;
+    std::vector<int64_t> hidden_shape;
+    std::vector<int64_t> image_shape;
+
+    std::vector<float> hidden_state;
 };
 
 };
