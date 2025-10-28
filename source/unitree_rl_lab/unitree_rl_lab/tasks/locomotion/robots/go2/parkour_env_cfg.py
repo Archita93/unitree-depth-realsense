@@ -1,3 +1,4 @@
+import torch
 import math
 import scipy.spatial.transform as tf
 
@@ -23,15 +24,27 @@ from isaaclab.utils.noise import AdditiveUniformNoiseCfg as Unoise
 from unitree_rl_lab.assets.robots.unitree import UNITREE_GO2_CFG
 from unitree_rl_lab.tasks.locomotion import mdp
 
-def quat_from_euler_rpy(roll, pitch, yaw, degrees=False):
-    """Converts Euler XYZ to Quaternion (w, x, y, z)."""
-    quat = tf.Rotation.from_euler("xyz", (roll, pitch, yaw), degrees=degrees).as_quat()
-    return tuple(quat[[3, 0, 1, 2]].tolist())
+
+def quat_from_euler_xyz_tuple(roll: torch.Tensor, pitch: torch.Tensor, yaw: torch.Tensor) -> tuple:
+    cy = torch.cos(yaw * 0.5)
+    sy = torch.sin(yaw * 0.5)
+    cr = torch.cos(roll * 0.5)
+    sr = torch.sin(roll * 0.5)
+    cp = torch.cos(pitch * 0.5)
+    sp = torch.sin(pitch * 0.5)
+    # compute quaternion
+    qw = cy * cr * cp + sy * sr * sp
+    qx = cy * sr * cp - sy * cr * sp
+    qy = cy * cr * sp + sy * sr * cp
+    qz = sy * cr * cp - cy * sr * sp
+    convert = torch.stack([qw, qx, qy, qz], dim=-1) * torch.tensor([1.,1.,1.,-1])
+    return tuple(convert.numpy().tolist())
 
 IMAGE_W = 48
 IMAGE_H = 48
-CAMERA_TRANSFORM_TRANS = (0.3, 0.0, 0.3)
+CAMERA_TRANSFORM_TRANS = (0.33, 0.0, 0.08)
 CAMERA_TRANSFORM_ROT = tf.Rotation.from_euler("xzy", (90.0, -90.0, 60.0), degrees=True).as_quat()[[3, 0, 1, 2]].tolist()
+# CAMERA_TRANSFORM_ROT = tf.Rotation.from_euler("xzy", (90.0, -90.0, 60.0), degrees=True).as_quat()[[3, 0, 1, 2]].tolist()
 # CAMERA_TRANSFORM_ROT = (0.627211, 0.326506, -0.326506, -0.627211)
 
 DEBUG_VIS = True
@@ -60,7 +73,7 @@ PARKOUR_TERRAIN_CFG = terrain_gen.TerrainGeneratorCfg(
         ),
         "ring": terrain_gen.MeshFloatingRingTerrainCfg(
             ring_width_range=(0.1, 1.0),
-            ring_height_range=(0.25, 0.50),
+            ring_height_range=(0.25, 0.40),
             ring_thickness=0.5,
             platform_width=1.5,
             proportion=0.1,
@@ -109,6 +122,80 @@ PARKOUR_TERRAIN_CFG = terrain_gen.TerrainGeneratorCfg(
     },
 )
 
+EXTENDED_PARKOUR_TERRAIN_CFG = terrain_gen.TerrainGeneratorCfg(
+    size=(8.0, 8.0),
+    border_width=20.0,
+    num_rows=10,
+    num_cols=30,
+    horizontal_scale=0.1,
+    vertical_scale=0.005,
+    slope_threshold=0.75,
+    difficulty_range=(0.0, 1.0),
+    use_cache=False,
+    sub_terrains={
+        # "random_rough": terrain_gen.HfRandomUniformTerrainCfg(
+        #     proportion=0.1,
+        #     noise_range=(0.01, 0.06),
+        #     noise_step=0.01,
+        #     border_width=0.25,
+        # ),
+        "gap": terrain_gen.MeshGapTerrainCfg(
+            gap_width_range=(0.01, 0.8),
+            platform_width=1.5,
+            proportion=0.1,
+        ),
+        "ring": terrain_gen.MeshFloatingRingTerrainCfg(
+            ring_width_range=(0.1, 1.0),
+            ring_height_range=(0.25, 0.40),
+            ring_thickness=0.5,
+            platform_width=1.5,
+            proportion=0.1,
+        ),
+        "box": terrain_gen.MeshBoxTerrainCfg(
+            box_height_range=(0.01, 0.5),
+            platform_width=1.5,
+            double_box=True,
+            proportion=0.1,
+        ),
+        "pit": terrain_gen.MeshPitTerrainCfg(
+            pit_depth_range=(0.01, 0.5),
+            platform_width=1.5,
+            double_pit=True,
+            proportion=0.1,
+        ),
+        # "stepping_stones": terrain_gen.HfSteppingStonesTerrainCfg(
+        #     stone_width_range=(0.05, 0.05),
+        #     stone_distance_range=(0.05, 0.05),
+        #     stone_height_max=0.1,
+        #     platform_width=2.0,
+        #     proportion=0.1,
+        # ),
+        # "hf_pyramid_slope": terrain_gen.HfPyramidSlopedTerrainCfg(
+        #     proportion=0.1, slope_range=(0.0, 0.4), platform_width=2.0, border_width=0.25
+        # ),
+        # "hf_pyramid_slope_inv": terrain_gen.HfInvertedPyramidSlopedTerrainCfg(
+        #     proportion=0.1, slope_range=(0.0, 0.4), platform_width=2.0, border_width=0.25
+        # ),
+        "pyramid_stairs": terrain_gen.MeshPyramidStairsTerrainCfg(
+            proportion=0.1,
+            step_height_range=(0.05, 0.23),
+            step_width=0.3,
+            platform_width=3.0,
+            border_width=1.0,
+            holes=False,
+        ),
+        "pyramid_stairs_inv": terrain_gen.MeshInvertedPyramidStairsTerrainCfg(
+            proportion=0.1,
+            step_height_range=(0.05, 0.23),
+            step_width=0.3,
+            platform_width=3.0,
+            border_width=1.0,
+            holes=False,
+        ),
+    },
+)
+
+
 COBBLESTONE_ROAD_CFG = terrain_gen.TerrainGeneratorCfg(
     size=(8.0, 8.0),
     border_width=20.0,
@@ -153,30 +240,9 @@ COBBLESTONE_ROAD_CFG = terrain_gen.TerrainGeneratorCfg(
 
 
 @configclass
-class RobotSceneCfg(InteractiveSceneCfg):
+class RobotSceneCfgBase(InteractiveSceneCfg):
     """Configuration for the terrain scene with a legged robot."""
 
-    # ground terrain
-    terrain = TerrainImporterCfg(
-        prim_path="/World/ground",
-        terrain_type="generator",  # "plane", "generator"
-        terrain_generator=PARKOUR_TERRAIN_CFG,
-        # terrain_generator=COBBLESTONE_ROAD_CFG,
-        max_init_terrain_level=1,
-        collision_group=-1,
-        physics_material=sim_utils.RigidBodyMaterialCfg(
-            friction_combine_mode="multiply",
-            restitution_combine_mode="multiply",
-            static_friction=1.0,
-            dynamic_friction=1.0,
-        ),
-        visual_material=sim_utils.MdlFileCfg(
-            mdl_path=f"{ISAACLAB_NUCLEUS_DIR}/Materials/TilesMarbleSpiderWhiteBrickBondHoned/TilesMarbleSpiderWhiteBrickBondHoned.mdl",
-            project_uvw=True,
-            texture_scale=(0.25, 0.25),
-        ),
-        debug_vis=False,
-    )
     # robots
     robot: ArticulationCfg = UNITREE_GO2_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
 
@@ -223,23 +289,26 @@ class RobotSceneCfg(InteractiveSceneCfg):
         offset=RayCasterCameraCfg.OffsetCfg(
             pos=CAMERA_TRANSFORM_TRANS,
             # rot=(0.5, 0.5, -0.5, -0.5),
-            rot=CAMERA_TRANSFORM_ROT,
-            # rot=quat_from_euler_rpy(90.0, -90.0, 0.0, degrees=True),
-            convention="opengl",
+            # rot=CAMERA_TRANSFORM_ROT,
+            rot=quat_from_euler_xyz_tuple(*tuple(torch.deg2rad(torch.tensor([180,70,-90])))),
+            convention="ros",
         ),
         update_period=0.1,
-        ray_alignment="base",
+        # ray_alignment="base",
         max_distance=1.0,
         depth_clipping_behavior="max",
         debug_vis=DEBUG_VIS,
         # debug_vis=False,
         pattern_cfg=patterns.PinholeCameraPatternCfg(
+            focal_length=11.041, 
+            horizontal_aperture=20.955,
+            vertical_aperture = 12.240,
             width=IMAGE_W,
             height=IMAGE_H
         ),
         mesh_prim_paths=["/World/ground"],
         data_types=[
-            "distance_to_image_plane",
+            "distance_to_camera",
         ],
     )
 
@@ -251,6 +320,53 @@ class RobotSceneCfg(InteractiveSceneCfg):
             intensity=750.0,
             texture_file=f"{ISAAC_NUCLEUS_DIR}/Materials/Textures/Skies/PolyHaven/kloofendal_43d_clear_puresky_4k.hdr",
         ),
+    )
+
+
+class RobotSceneCfg(RobotSceneCfgBase):
+    # ground terrain
+    terrain = TerrainImporterCfg(
+        prim_path="/World/ground",
+        terrain_type="generator",  # "plane", "generator"
+        terrain_generator=PARKOUR_TERRAIN_CFG,
+        # terrain_generator=COBBLESTONE_ROAD_CFG,
+        max_init_terrain_level=1,
+        collision_group=-1,
+        physics_material=sim_utils.RigidBodyMaterialCfg(
+            friction_combine_mode="multiply",
+            restitution_combine_mode="multiply",
+            static_friction=1.0,
+            dynamic_friction=1.0,
+        ),
+        visual_material=sim_utils.MdlFileCfg(
+            mdl_path=f"{ISAACLAB_NUCLEUS_DIR}/Materials/TilesMarbleSpiderWhiteBrickBondHoned/TilesMarbleSpiderWhiteBrickBondHoned.mdl",
+            project_uvw=True,
+            texture_scale=(0.25, 0.25),
+        ),
+        debug_vis=False,
+    )
+
+class ExtendedRobotSceneCfg(RobotSceneCfgBase):
+    # ground terrain
+    terrain = TerrainImporterCfg(
+        prim_path="/World/ground",
+        terrain_type="generator",  # "plane", "generator"
+        terrain_generator=EXTENDED_PARKOUR_TERRAIN_CFG,
+        # terrain_generator=COBBLESTONE_ROAD_CFG,
+        max_init_terrain_level=1,
+        collision_group=-1,
+        physics_material=sim_utils.RigidBodyMaterialCfg(
+            friction_combine_mode="multiply",
+            restitution_combine_mode="multiply",
+            static_friction=1.0,
+            dynamic_friction=1.0,
+        ),
+        visual_material=sim_utils.MdlFileCfg(
+            mdl_path=f"{ISAACLAB_NUCLEUS_DIR}/Materials/TilesMarbleSpiderWhiteBrickBondHoned/TilesMarbleSpiderWhiteBrickBondHoned.mdl",
+            project_uvw=True,
+            texture_scale=(0.25, 0.25),
+        ),
+        debug_vis=False,
     )
 
 
@@ -279,6 +395,15 @@ class EventCfg:
             "mass_distribution_params": (-1.0, 3.0),
             "operation": "add",
         },
+    )
+
+    random_camera_position = EventTerm(
+        func= mdp.random_camera_position,
+        mode="startup",
+        params={'sensor_cfg':SceneEntityCfg("depth_camera"),
+                'rot_noise_range': {'pitch':(-5, 5)},
+                'convention':'ros',
+                },
     )
 
     # reset
@@ -383,7 +508,7 @@ class ObservationsCfg:
     class VisionCfg(ObsGroup):
         image = ObsTerm(func=mdp.image, params={
             "sensor_cfg": SceneEntityCfg("depth_camera"),
-            "data_type": "distance_to_image_plane",
+            "data_type": "distance_to_camera",
             "normalize": True,
         })
         def __post_init__(self):
@@ -535,10 +660,11 @@ class RewardsCfg:
     # -- other
     undesired_contacts = RewTerm(
         func=mdp.undesired_contacts,
-        weight=-0.5,
+        weight=-5.0,
         params={
             "threshold": 1,
-            "sensor_cfg": SceneEntityCfg("contact_forces", body_names=["Head_.*", ".*_hip", ".*_thigh", ".*_calf"]),
+            "sensor_cfg": SceneEntityCfg("contact_forces", body_names=["Head_.*", ".*_hip",
+                                                                       ".*_thigh", ".*_calf", "base"]),
         },
     )
 
@@ -617,7 +743,7 @@ class RobotPlayEnvCfg(RobotEnvCfg):
     def __post_init__(self):
         super().__post_init__()
         self.scene.num_envs = 32
-        self.scene.terrain.terrain_generator.num_rows = 4
+        self.scene.terrain.terrain_generator.num_rows = 2
         # self.scene.terrain.terrain_generator.num_cols = len(COBBLESTONE_ROAD_CFG.sub_terrains)
         self.scene.terrain.terrain_generator.num_cols = len(PARKOUR_TERRAIN_CFG.sub_terrains)
         self.commands.base_velocity.ranges = self.commands.base_velocity.limit_ranges
@@ -634,6 +760,7 @@ class TeacherEnvCfg(RobotEnvCfg):
         self.observations.policy = self.observations.TeacherCfg()
         self.observations.teacher = None
         self.observations.student = None
+        self.events.random_camera_position = None
 
 @configclass
 class TeacherPlayEnvCfg(RobotPlayEnvCfg):
@@ -648,6 +775,7 @@ class TeacherPlayEnvCfg(RobotPlayEnvCfg):
         self.observations.student = None
         self.curriculum = None
         self.commands.base_velocity.ranges = self.commands.base_velocity.limit_ranges
+        self.events.random_camera_position = None
 
 @configclass
 class RecordEnvCfg(RobotEnvCfg):
@@ -693,6 +821,36 @@ class StudentPlayEnvCfg(RobotPlayEnvCfg):
     def __post_init__(self):
         super().__post_init__()
         # compute only one observation cfg
+        self.observations.vision = self.observations.VisionCfg()
+        self.observations.critic = self.observations.TeacherCfg()
+        self.observations.policy = self.observations.StudentCfg()
+        self.observations.teacher = None
+        self.observations.student = None
+        self.curriculum = None
+        self.commands.base_velocity.ranges = self.commands.base_velocity.limit_ranges
+
+
+
+@configclass
+class ExtendedStudentEnvCfg(RobotEnvCfg):
+    scene: RobotSceneCfg = ExtendedRobotSceneCfg(num_envs=4096, env_spacing=2.5)
+    def __post_init__(self):
+        super().__post_init__()
+        # compute only one observation cfg
+        self.observations.vision = self.observations.VisionCfg()
+        self.observations.critic = self.observations.TeacherCfg()
+        self.observations.policy = self.observations.StudentCfg()
+        self.observations.teacher = None
+        self.observations.student = None
+
+@configclass
+class ExtendedStudentPlayEnvCfg(RobotPlayEnvCfg):
+    scene: RobotSceneCfg = ExtendedRobotSceneCfg(num_envs=4096, env_spacing=2.5)
+    def __post_init__(self):
+        super().__post_init__()
+        # compute only one observation cfg
+        self.scene.terrain.terrain_generator.num_rows = 2
+        self.scene.terrain.terrain_generator.num_cols = len(EXTENDED_PARKOUR_TERRAIN_CFG.sub_terrains)
         self.observations.vision = self.observations.VisionCfg()
         self.observations.critic = self.observations.TeacherCfg()
         self.observations.policy = self.observations.StudentCfg()

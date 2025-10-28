@@ -81,6 +81,26 @@ gym.register(
 )
 
 gym.register(
+    id="Unitree-Go2-Extended-Parkour-Student",
+    entry_point="isaaclab.envs:ManagerBasedRLEnv",
+    disable_env_checker=True,
+    kwargs={
+        "env_cfg_entry_point": f"{__name__}.parkour_env_cfg:ExtendedStudentEnvCfg",
+        "rsl_rl_cfg_entry_point": f"unitree_rl_lab.tasks.locomotion.agents.rsl_rl_ppo_cfg:BasePPORunnerCfg",
+    },
+)
+
+gym.register(
+    id="Unitree-Go2-Extended-Parkour-Student-Play",
+    entry_point="isaaclab.envs:ManagerBasedRLEnv",
+    disable_env_checker=True,
+    kwargs={
+        "env_cfg_entry_point": f"{__name__}.parkour_env_cfg:ExtendedStudentPlayEnvCfg",
+        "rsl_rl_cfg_entry_point": f"unitree_rl_lab.tasks.locomotion.agents.rsl_rl_ppo_cfg:BasePPORunnerCfg",
+    },
+)
+
+gym.register(
     id="Unitree-Go2-Parkour-Record",
     entry_point="isaaclab.envs:ManagerBasedRLEnv",
     disable_env_checker=True,
