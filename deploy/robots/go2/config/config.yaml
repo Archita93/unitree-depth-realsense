@@ -38,3 +38,5 @@ FSM:
     policy_dir: ../../../policies/unitree-go2-parkour-simbav2-bc-no-vision
     # policy_dir: ../../../policies/unitree-go2-parkour-simbav2-bc-vision
     use_vision: true
+
+    realsense: {}

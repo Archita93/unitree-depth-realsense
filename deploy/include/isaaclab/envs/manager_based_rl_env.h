@@ -6,6 +6,7 @@
 #include <eigen3/Eigen/Dense>
 #include <yaml-cpp/yaml.h>
 #include "isaaclab/manager/observation_manager.h"
+#include "isaaclab/manager/realsense_manager.h"
 #include "isaaclab/manager/action_manager.h"
 #include "isaaclab/assets/articulation/articulation.h"
 #include "isaaclab/algorithms/algorithms.h"
@@ -44,6 +45,7 @@ public:
         // load managers
         action_manager = std::make_unique<ActionManager>(cfg["actions"], this);
         observation_manager = std::make_unique<ObservationManager>(cfg["observations"], this);
+        realsense_manager = std::make_unique<RealsenseManager>(cfg["realsense"], this);
     }
 
     void reset()
@@ -59,6 +61,8 @@ public:
         episode_length += 1;
         robot->update();
         auto obs = observation_manager->compute();
+        auto image = realsense_manager->compute();
+        // auto action = alg->act(obs, image);
         auto action = alg->act(obs);
         action_manager->process_action(action);
     }
@@ -68,6 +72,7 @@ public:
     YAML::Node cfg;
 
     std::unique_ptr<ObservationManager> observation_manager;
+    std::unique_ptr<RealsenseManager> realsense_manager;
     std::unique_ptr<ActionManager> action_manager;
     std::shared_ptr<Articulation> robot;
     std::unique_ptr<Algorithms> alg;

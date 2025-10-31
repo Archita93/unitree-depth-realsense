@@ -13,6 +13,7 @@ class Algorithms
 {
 public:
     virtual std::vector<float> act(std::vector<float> obs) = 0;
+    virtual std::vector<float> act(std::vector<float> obs, const cv::Mat& image) = 0;
     
     std::vector<float> get_action()
     {
@@ -59,6 +60,48 @@ public:
           std::move(hidden_state_tensor)
         };
         auto output_tensor = session->Run(Ort::RunOptions{nullptr}, input_names.data(), inputs, 2, output_names.data(), 2);
+        auto floatarr = output_tensor.front().GetTensorMutableData<float>();
+        auto hidden_state_out = output_tensor.back().GetTensorMutableData<float>();
+
+        std::lock_guard<std::mutex> lock(act_mtx_);
+        std::memcpy(action.data(), floatarr, output_shape[1] * sizeof(float));
+        std::memcpy(hidden_state.data(), hidden_state_out, hidden_shape[1] * sizeof(float));
+        return action;
+    }
+
+    std::vector<float> act(std::vector<float> obs, const cv::Mat& depth)
+    {
+        const cv::Mat depth_cont = depth.isContinuous() ? depth : depth.clone();
+        const int64_t H = depth_cont.rows;
+        const int64_t W = depth_cont.cols;
+
+        auto memory_info = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeCPU);
+        auto input_tensor = Ort::Value::CreateTensor<float>(memory_info, obs.data(), obs.size(), input_shape.data(), input_shape.size());
+        auto hidden_state_tensor = Ort::Value::CreateTensor<float>(memory_info, hidden_state.data(), hidden_state.size(), hidden_shape.data(), hidden_shape.size());
+
+        int64_t img_shape[4] = {1, H, W, 1};
+        auto image_tensor = Ort::Value::CreateTensor<float>(
+          memory_info,
+          const_cast<float*>(depth_cont.ptr<float>()),
+          static_cast<size_t>(H) * static_cast<size_t>(W),
+          img_shape, 4
+        );
+
+        const Ort::Value inputs[] = {
+          std::move(input_tensor),
+          std::move(hidden_state_tensor),
+          std::move(image_tensor),
+        };
+
+        auto output_tensor = session->Run(
+          Ort::RunOptions{nullptr},
+          image_input_names.data(),
+          inputs,
+          3,
+          output_names.data(),
+          2
+        );
+
         auto floatarr = output_tensor.front().GetTensorMutableData<float>();
         auto hidden_state_out = output_tensor.back().GetTensorMutableData<float>();
 

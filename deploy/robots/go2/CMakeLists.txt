@@ -3,6 +3,7 @@ project(go2_controller)
 
 find_package(Boost REQUIRED COMPONENTS program_options)
 find_package(yaml-cpp REQUIRED)
+find_package(OpenCV REQUIRED)
 
 include_directories(
   /usr/include/eigen3
@@ -12,11 +13,14 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/../../thirdparty/ocs2/include
   ${PROJECT_SOURCE_DIR}/../../thirdparty/onnxruntime-linux-x64-1.22.0/include
   ${PROJECT_SOURCE_DIR}/../../include/
+  ${OpenCV_INCLUDE_DIRS}
 )
 
 link_libraries(
   unitree_sdk2 ddsc ddscxx rt pthread # dds
   libboost_program_options.a libyaml-cpp.a fmt
+  realsense2
+  ${OpenCV_LIBS}
   ${PROJECT_SOURCE_DIR}/../../thirdparty/onnxruntime-linux-x64-1.22.0/lib/libonnxruntime.so
 )
 
