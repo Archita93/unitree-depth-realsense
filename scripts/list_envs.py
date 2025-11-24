@@ -28,6 +28,7 @@ import gymnasium as gym
 from prettytable import PrettyTable
 
 import unitree_rl_lab.tasks  # noqa: F401
+import parkour_tasks  # noqa: F401
 
 
 def main():
@@ -44,7 +45,7 @@ def main():
     index = 0
     # acquire all Isaac environments names
     for task_spec in gym.registry.values():
-        if "Unitree" in task_spec.id and "Isaac" not in task_spec.id:
+        if "Unitree" in task_spec.id and "Isaac" not in task_spec.id  or "Parkour" in task_spec.id or "Easy" in task_spec.id:
             # add details to table
             table.add_row([index + 1, task_spec.id, task_spec.entry_point, task_spec.kwargs["env_cfg_entry_point"]])
             # increment count

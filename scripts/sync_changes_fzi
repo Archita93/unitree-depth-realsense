@@ -1,0 +1,31 @@
+#!/usr/bin/bash
+
+set -e
+
+readonly SCRIPT_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)"
+readonly REPO_PATH="${SCRIPT_DIR}/.."
+
+readonly REMOTE="yh974@ids-gpu-01.fzi.de"
+readonly REMOTE_PATH="/mnt/home/yh974/unitree_rl_lab"
+readonly REMOTE_ENV="fasttd3"
+
+#######################################
+# Syncs repo state to remote machine
+# Globals:
+#   REPO_PATH
+#   REMOTE
+#   REMOTE_PATH
+# Arguments:
+#   None
+#######################################
+function sync_state() {
+  pushd "${REPO_PATH}"
+  rsync --recursive --exclude-from ./.gitignore --update --progress -e 'ssh -l yh974@fzi.de' ./ "fzi-gpu-mgmt-01.fzi.de:/home/yh974@fzi.de/unitree_rl_lab"
+  popd
+}
+
+function main() {
+  sync_state
+}
+
+main "$@"

@@ -46,8 +46,7 @@ python scripts/train_rnn.py \
   --project ${project} \
   --agent ${agent} \
   ${addition_args} \
-  --render_interval 0 \
-  --seed 1
+  --render_interval 0
 EOF
 }
 
