@@ -12,8 +12,9 @@ from isaaclab.managers import RewardTermCfg as RewTerm
 from isaaclab.managers import SceneEntityCfg
 from isaaclab.managers import TerminationTermCfg as DoneTerm
 from isaaclab.scene import InteractiveSceneCfg
-from isaaclab.sensors import ContactSensorCfg, RayCasterCfg, patterns
+from isaaclab.sensors import ContactSensorCfg, RayCasterCfg, patterns, MultiMeshRayCasterCameraCfg
 from isaaclab.terrains import TerrainImporterCfg
+from isaaclab.sensors import ContactSensorCfg, RayCasterCfg, patterns, TiledCameraCfg, RayCasterCameraCfg, MultiMeshRayCasterCameraCfg
 from isaaclab.terrains.config.rough import ROUGH_TERRAINS_CFG  # isort: skip
 from isaaclab.utils import configclass
 from isaaclab.utils.assets import ISAAC_NUCLEUS_DIR, ISAACLAB_NUCLEUS_DIR
@@ -50,8 +51,8 @@ class RobotSceneCfg(InteractiveSceneCfg):
     # ground terrain
     terrain = TerrainImporterCfg(
         prim_path="/World/ground",
-        terrain_type="generator",  # "plane", "generator"
-        terrain_generator=COBBLESTONE_ROAD_CFG,  # None, ROUGH_TERRAINS_CFG
+        terrain_type="plane",  # "plane", "generator"
+        # terrain_generator=COBBLESTONE_ROAD_CFG,  # None, ROUGH_TERRAINS_CFG
         # terrain_generator=ROUGH_TERRAINS_CFG,  # None, ROUGH_TERRAINS_CFG
         max_init_terrain_level=1,
         collision_group=-1,
@@ -80,13 +81,40 @@ class RobotSceneCfg(InteractiveSceneCfg):
         debug_vis=False,
         mesh_prim_paths=["/World/ground"],
     )
+
     contact_forces = ContactSensorCfg(prim_path="{ENV_REGEX_NS}/Robot/.*", history_length=3, track_air_time=True)
+
     # lights
     sky_light = AssetBaseCfg(
         prim_path="/World/skyLight",
         spawn=sim_utils.DomeLightCfg(
             intensity=750.0,
             texture_file=f"{ISAAC_NUCLEUS_DIR}/Materials/Textures/Skies/PolyHaven/kloofendal_43d_clear_puresky_4k.hdr",
+        ),
+    )
+
+    ray_caster_camera = MultiMeshRayCasterCameraCfg(
+        prim_path="{ENV_REGEX_NS}/Robot/base",
+        update_period=1.0 / 30.0,
+        offset=RayCasterCameraCfg.OffsetCfg(
+            pos=(0.27, 0.0, 0.30),
+            convention="ros",
+            # rot=(-0.5, 0.5, -0.5, 0.5),
+            rot=(0.43, -0.561, 0.561, -0.43),
+        ),
+        mesh_prim_paths=["/World/ground"],
+        ray_alignment="base",
+        data_types=[
+            "distance_to_image_plane",
+        ],
+        depth_clipping_behavior="max",
+        debug_vis=True,
+        pattern_cfg=patterns.PinholeCameraPatternCfg(
+            focal_length=24.0,           # mm
+            horizontal_aperture=39.7,    # mm
+            vertical_aperture=29.8,      # mm
+            width=128,
+            height=96,
         ),
     )
 
@@ -210,6 +238,11 @@ class ObservationsCfg:
         )
         last_action = ObsTerm(func=mdp.last_action, clip=(-100, 100))
 
+        egocentric_depth = ObsTerm(
+            func=mdp.raycaster_depth_norm,
+            params={"sensor_cfg": SceneEntityCfg("ray_caster_camera"), "max_distance": 5.0, "invert": True},    
+        )
+
         def __post_init__(self):
             # self.history_length = 5
             self.enable_corruption = True
@@ -235,6 +268,10 @@ class ObservationsCfg:
         height_scanner = ObsTerm(func=mdp.height_scan,
             params={"sensor_cfg": SceneEntityCfg("height_scanner")},
             clip=(-1.0, 5.0),
+        )
+        egocentric_depth = ObsTerm(
+            func=mdp.raycaster_depth_norm,
+            params={"sensor_cfg": SceneEntityCfg("ray_caster_camera"), "max_distance": 5.0, "invert": True},    
         )
 
         # def __post_init__(self):
@@ -338,7 +375,7 @@ class TerminationsCfg:
 class CurriculumCfg:
     """Curriculum terms for the MDP."""
 
-    terrain_levels = CurrTerm(func=mdp.terrain_levels_vel)
+    # terrain_levels = CurrTerm(func=mdp.terrain_levels_vel)
     lin_vel_cmd_levels = CurrTerm(mdp.lin_vel_cmd_levels)
 
 
@@ -373,6 +410,7 @@ class RobotEnvCfg(ManagerBasedRLEnvCfg):
         # we tick all the sensors based on the smallest update period (physics update period)
         self.scene.contact_forces.update_period = self.sim.dt
         self.scene.height_scanner.update_period = self.decimation * self.sim.dt
+        # self.scene.ray_caster_camera.update_period = self.decimation * self.sim.dt
 
         # check if terrain levels curriculum is enabled - if so, enable curriculum for terrain generator
         # this generates terrains with increasing difficulty and is useful for training

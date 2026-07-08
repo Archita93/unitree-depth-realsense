@@ -12,6 +12,7 @@
 #include "isaaclab/algorithms/algorithms.h"
 #include <iostream>
 
+
 namespace isaaclab
 {
 
@@ -60,8 +61,9 @@ public:
     {
         episode_length += 1;
         robot->update();
+        last_depth = realsense_manager->compute();
         auto obs = observation_manager->compute();
-        auto image = realsense_manager->compute();
+        // auto image = realsense_manager->compute();
         // auto action = alg->act(obs, image);
         auto action = alg->act(obs);
         action_manager->process_action(action);
@@ -78,6 +80,7 @@ public:
     std::unique_ptr<Algorithms> alg;
     long episode_length = 0;
     float global_phase = 0.0f;
+    cv::Mat last_depth;
 };
 
 };

@@ -92,5 +92,24 @@ REGISTER_OBSERVATION(gait_phase)
     return obs;
 }
 
+REGISTER_OBSERVATION(egocentric_depth)
+{
+    auto params = env->cfg["observations"]["egocentric_depth"]["params"];
+    float max_distance = params["max_distance"].as<float>(5.0f);
+    bool invert = params["invert"].as<bool>(true);
+
+    const cv::Mat& depth = env->last_depth;
+    const cv::Mat depth_cont = depth.isContinuous() ? depth : depth.clone();
+
+    std::vector<float> obs(depth_cont.total());
+    const float* ptr = depth_cont.ptr<float>();
+    for (size_t i = 0; i < obs.size(); ++i)
+    {
+        float d = ptr[i] / max_distance;
+        obs[i] = invert ? (1.0f - d) : d;
+    }
+    return obs;
+}
+
 }
 }

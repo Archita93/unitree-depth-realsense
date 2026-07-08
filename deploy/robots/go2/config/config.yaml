@@ -35,8 +35,9 @@ FSM:
     # policy_dir: ../../../policies/unitree-go2-velocity__2025-01-08_20_26_16-fasttd3-no_squashing_original_action_scale_higher_action_bounds_no_noise_resampling__1_final
     # policy_dir: ../../../policies/unitree-go2-velocity__2025-04-08_18_24_02-fasttd3-no_squashing_original_action_scale_higher_action_bounds__1_final
     # policy_dir: ../../../policies/unitree-go2-velocity__hyperparams__1_final
-    policy_dir: ../../../policies/unitree-go2-parkour-simbav2-bc-no-vision
+    policy_dir: ../../../logs/rsl_rl/unitree_go2_velocity/2026-07-08_16-01-35
     # policy_dir: ../../../policies/unitree-go2-parkour-simbav2-bc-vision
     use_vision: true
 
     realsense: {}
+

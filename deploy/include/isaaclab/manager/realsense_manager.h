@@ -51,12 +51,13 @@ public:
         cv::Mat z16(h, w, CV_16U, (void*)df.get_data(), cv::Mat::AUTO_STEP);
         cv::Mat depth_m;
         z16.convertTo(depth_m, CV_32F, depth_scale);
-        cv::min(depth_m, 2.0f, depth_m);
+        cv::min(depth_m, 5.0f, depth_m);
 
-        cv::Mat depth_48;
-        cv::resize(depth_m, depth_48, cv::Size(48, 48), 0, 0, cv::INTER_AREA);
+        // cv::Mat depth_48;
+        cv::Mat depth_resized;
+        cv::resize(depth_m, depth_resized, cv::Size(128, 96), 0, 0, cv::INTER_AREA);
 
-        return depth_48;
+        return depth_resized;
     }
 
 protected:

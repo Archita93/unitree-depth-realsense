@@ -23,7 +23,7 @@ class UnitreeArticulationCfg(ArticulationCfg):
     joint_sdk_names: list[str] = None
 
 
-UNITREE_MODEL_DIR = "/home/ubuntu/unitree_rl_lab/external/unitree_model"
+UNITREE_MODEL_DIR = "/home/sq9025/unitree_rl_lab/unitree_model"
 
 UNITREE_GO2_CFG = UnitreeArticulationCfg(
     spawn=sim_utils.UsdFileCfg(

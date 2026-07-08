@@ -7,14 +7,17 @@ find_package(OpenCV REQUIRED)
 
 include_directories(
   /usr/include/eigen3
-  /usr/local/include/ddscxx # dds
+  $ENV{HOME}/.local/include/ddscxx
   /usr/local/include/iceoryx/v2.0.2 # dds
+  $ENV{HOME}/.local/include
   include
   ${PROJECT_SOURCE_DIR}/../../thirdparty/ocs2/include
   ${PROJECT_SOURCE_DIR}/../../thirdparty/onnxruntime-linux-x64-1.22.0/include
   ${PROJECT_SOURCE_DIR}/../../include/
   ${OpenCV_INCLUDE_DIRS}
 )
+
+link_directories($ENV{HOME}/.local/lib)
 
 link_libraries(
   unitree_sdk2 ddsc ddscxx rt pthread # dds
