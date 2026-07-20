@@ -51,6 +51,7 @@ public:
         cv::Mat z16(h, w, CV_16U, (void*)df.get_data(), cv::Mat::AUTO_STEP);
         cv::Mat depth_m;
         z16.convertTo(depth_m, CV_32F, depth_scale);
+        depth_m.setTo(5.0f, depth_m == 0.0f);
         cv::min(depth_m, 5.0f, depth_m);
 
         // cv::Mat depth_48;

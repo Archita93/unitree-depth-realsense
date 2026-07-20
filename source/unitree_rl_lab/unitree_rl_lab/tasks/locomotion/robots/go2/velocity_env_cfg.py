@@ -95,7 +95,7 @@ class RobotSceneCfg(InteractiveSceneCfg):
 
     ray_caster_camera = MultiMeshRayCasterCameraCfg(
         prim_path="{ENV_REGEX_NS}/Robot/base",
-        update_period=1.0 / 30.0,
+        # update_period=1.0 / 30.0,
         offset=RayCasterCameraCfg.OffsetCfg(
             pos=(0.27, 0.0, 0.30),
             convention="ros",
@@ -410,7 +410,7 @@ class RobotEnvCfg(ManagerBasedRLEnvCfg):
         # we tick all the sensors based on the smallest update period (physics update period)
         self.scene.contact_forces.update_period = self.sim.dt
         self.scene.height_scanner.update_period = self.decimation * self.sim.dt
-        # self.scene.ray_caster_camera.update_period = self.decimation * self.sim.dt
+        self.scene.ray_caster_camera.update_period = self.decimation * self.sim.dt
 
         # check if terrain levels curriculum is enabled - if so, enable curriculum for terrain generator
         # this generates terrains with increasing difficulty and is useful for training
