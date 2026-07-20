@@ -63,14 +63,12 @@ public:
         robot->update();
         last_depth = realsense_manager->compute();
         auto obs = observation_manager->compute();
-        // auto image = realsense_manager->compute();
-        // auto action = alg->act(obs, image);
+        std::cout << "[DEBUG] obs.size() = " << obs.size() << std::endl;  
         auto action = alg->act(obs);
         action_manager->process_action(action);
     }
 
     float step_dt;
-    
     YAML::Node cfg;
 
     std::unique_ptr<ObservationManager> observation_manager;
