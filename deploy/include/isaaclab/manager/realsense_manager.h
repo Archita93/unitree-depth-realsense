@@ -56,7 +56,7 @@ public:
 
         // cv::Mat depth_48;
         cv::Mat depth_resized;
-        cv::resize(depth_m, depth_resized, cv::Size(212, 120), 0, 0, cv::INTER_AREA);
+        cv::resize(depth_m, depth_resized, cv::Size(128, 96), 0, 0, cv::INTER_AREA);
 
         return depth_resized;
     }
