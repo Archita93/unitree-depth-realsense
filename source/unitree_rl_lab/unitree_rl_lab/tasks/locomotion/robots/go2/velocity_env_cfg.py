@@ -97,10 +97,10 @@ class RobotSceneCfg(InteractiveSceneCfg):
         prim_path="{ENV_REGEX_NS}/Robot/base",
         # update_period=1.0 / 30.0,
         offset=RayCasterCameraCfg.OffsetCfg(
-            pos=(0.27, 0.0, 0.30),
+            pos=(0.35788147, 0.02838479, 0.08457861),
             convention="ros",
             # rot=(-0.5, 0.5, -0.5, 0.5),
-            rot=(0.43, -0.561, 0.561, -0.43),
+            rot=(0.40982078, -0.56213154, 0.58217425, -0.42086602),
         ),
         mesh_prim_paths=["/World/ground"],
         ray_alignment="base",
@@ -110,12 +110,12 @@ class RobotSceneCfg(InteractiveSceneCfg):
         depth_clipping_behavior="max",
         debug_vis=True,
         pattern_cfg=patterns.PinholeCameraPatternCfg(
-            focal_length=24.0,           # mm
-            horizontal_aperture=39.7,    # mm
-            vertical_aperture=29.8,      # mm
+            focal_length=24.0,
+            horizontal_aperture=33.7524,
+            vertical_aperture=18.9765,
             width=128,
             height=96,
-        ),
+        ),    
     )
 
 
