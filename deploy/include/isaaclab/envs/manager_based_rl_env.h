@@ -11,7 +11,8 @@
 #include "isaaclab/assets/articulation/articulation.h"
 #include "isaaclab/algorithms/algorithms.h"
 #include <iostream>
-
+#include <fstream>
+#include <cstdlib>
 
 namespace isaaclab
 {
@@ -47,6 +48,12 @@ public:
         action_manager = std::make_unique<ActionManager>(cfg["actions"], this);
         observation_manager = std::make_unique<ObservationManager>(cfg["observations"], this);
         realsense_manager = std::make_unique<RealsenseManager>(cfg["realsense"], this);
+
+        std::string home = std::getenv("HOME") ? std::getenv("HOME") : "/tmp";
+        log_file.open(home + "/action_log.csv");
+        log_file << "step,cmd_x,cmd_y,cmd_z,";
+        for (int i = 0; i < 12; i++) log_file << "raw_" << i << ",";
+        for (int i = 0; i < 12; i++) log_file << "proc_" << i << (i < 11 ? "," : "\n");
     }
 
     void reset()
@@ -59,6 +66,13 @@ public:
 
     void step()
     {
+
+        static auto last = std::chrono::steady_clock::now();
+        auto now = std::chrono::steady_clock::now();
+        double dt_ms = std::chrono::duration<double, std::milli>(now - last).count();
+        last = now;
+        std::cout << "actual dt: " << dt_ms << " ms (expected " << step_dt*1000 << ")\n";
+        
         episode_length += 1;
         robot->update();
         last_depth = realsense_manager->compute();
@@ -66,6 +80,14 @@ public:
         std::cout << "[DEBUG] obs.size() = " << obs.size() << std::endl;  
         auto action = alg->act(obs);
         action_manager->process_action(action);
+
+        auto proc = action_manager->processed_actions();
+        log_file << episode_length << ","
+                  << obs[6] << "," << obs[7] << "," << obs[8] << ",";
+        for (auto v : action) log_file << v << ",";              // raw network output
+        for (size_t i = 0; i < proc.size(); i++)
+            log_file << proc[i] << (i < proc.size()-1 ? "," : "\n");
+        log_file.flush();
     }
 
     float step_dt;
@@ -79,6 +101,7 @@ public:
     long episode_length = 0;
     float global_phase = 0.0f;
     cv::Mat last_depth;
+    std::ofstream log_file;
 };
 
 };
